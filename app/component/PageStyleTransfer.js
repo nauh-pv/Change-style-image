@@ -122,6 +122,40 @@ const PageStyleSnap = () => {
     setIsCaptured(false);
   };
 
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const videoDevices = devices.filter(
+        (device) => device.kind === "videoinput"
+      );
+      console.log(videoDevices); // Xem danh sách các camera có sẵn
+    });
+  }, []);
+
+  useEffect(() => {
+    async function getVideo() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 768, height: 1024 }, // Độ phân giải gốc của camera
+        });
+        if (webcamRef.current) {
+          webcamRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Error accessing camera: ", err);
+      }
+    }
+
+    getVideo();
+
+    return () => {
+      if (webcamRef.current && webcamRef.current.srcObject) {
+        webcamRef.current.srcObject
+          .getTracks()
+          .forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
   return (
     <div className="w-full max-h-[94vh] h-[94vh] items-center justify-center p-4 bg-white">
       <div className="w-full items-center flex justify-center text-[40px] font-bold uppercase">
