@@ -48,7 +48,7 @@ const SelectOne = ({ options, value, setValue }) => {
                   handleAddOption();
                 }}
               >
-                Add "{searchValue}"
+                Add {searchValue}
               </div>
             )}
           {menu}
