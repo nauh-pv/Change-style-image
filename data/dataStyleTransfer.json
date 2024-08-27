@@ -10,8 +10,9 @@
     { "label": "Sunset", "value": "sunset" },
     { "label": "Snow", "value": "snow" },
     { "label": "Jungle", "value": "jungle" },
-    { "label": "Abstract", "value": "abstract" },
-    { "label": "Plain Color", "value": "plain_color" }
+    { "label": "Plain Color", "value": "plain color" },
+    { "label": "Flower Garden", "value": "flower garden" },
+    { "label": "Beach sunset", "value": "beach sunset" }
   ],
 
   "outfitList": [
@@ -31,5 +32,9 @@
   "sexList": [
     { "label": "Nam", "value": "male" },
     { "label": "Nữ", "value": "female" }
+  ],
+  "styleList": [
+    { "label": "Anime", "value": "anime" },
+    { "label": "Real", "value": "real" }
   ]
 }
