@@ -1,0 +1,35 @@
+{
+  "backgroundList": [
+    { "label": "Forest", "value": "forest" },
+    { "label": "Beach", "value": "beach" },
+    { "label": "Cityscape", "value": "cityscape" },
+    { "label": "Mountains", "value": "mountains" },
+    { "label": "Desert", "value": "desert" },
+    { "label": "Space", "value": "space" },
+    { "label": "Underwater", "value": "underwater" },
+    { "label": "Sunset", "value": "sunset" },
+    { "label": "Snow", "value": "snow" },
+    { "label": "Jungle", "value": "jungle" },
+    { "label": "Abstract", "value": "abstract" },
+    { "label": "Plain Color", "value": "plain_color" }
+  ],
+
+  "outfitList": [
+    { "label": "Casual", "value": "casual" },
+    { "label": "Formal", "value": "formal" },
+    { "label": "Sporty", "value": "sporty" },
+    { "label": "Business", "value": "business" },
+    { "label": "Party", "value": "party" },
+    { "label": "Traditional", "value": "traditional" },
+    { "label": "Summer", "value": "summer" },
+    { "label": "Winter", "value": "winter" },
+    { "label": "Beachwear", "value": "beachwear" },
+    { "label": "Lounge", "value": "lounge" },
+    { "label": "Athleisure", "value": "athleisure" },
+    { "label": "Nightwear", "value": "nightwear" }
+  ],
+  "sexList": [
+    { "label": "Nam", "value": "male" },
+    { "label": "Nữ", "value": "female" }
+  ]
+}
