@@ -9,8 +9,8 @@ const postUploadImage = (image) => {
 const postGenerateImage = (nameImage, background, style) => {
   return axios.post("https://public.mekongai.com/style_snap", {
     url: `https://5579.mekongai.io/images/uploads/${nameImage}`,
-    background,
-    style,
+    background: background,
+    style: style,
   });
 };
 export { postUploadImage, postGenerateImage };

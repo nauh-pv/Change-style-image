@@ -1,119 +1,91 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import SelectOne from "./Select";
 import data from "../../data/dataStyleTransfer.json";
 import { postGenerateImage, postUploadImage } from "@/services/apiServices";
 import { message } from "antd";
 import CircleLoader from "react-spinners/CircleLoader";
 import { FcImageFile } from "react-icons/fc";
+import Webcam from "react-webcam";
 
 const PageStyleSnap = () => {
   const [background, setBackground] = useState();
-  const videoRef = useRef(null);
   const [preViewImage, setPreViewImage] = useState();
   const [imageCloud, setImageCloud] = useState();
-  const canvasRef = useRef(null);
   const [imageGenerate, setImageGenerate] = useState();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCapture, setIsLoadingCapture] = useState(false);
   const [style, setStyle] = useState();
+  const webcamRef = useRef(null);
+  const [isCaptured, setIsCaptured] = useState(false); // Trạng thái quản lý chế độ video/ảnh
 
-  const capturePhoto = async () => {
-    setIsLoadingCapture(true);
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
+  const videoConstraints = {
+    width: 768,
+    height: 1024,
+  };
 
-    if (!video || !canvas) {
-      message.error("Không thể truy cập video hoặc canvas.");
-      return;
-    }
-    // Thiết lập chiều rộng và chiều cao cho canvas
-    canvas.width = videoRef.current.videoHeight; // Hoán đổi chiều rộng và chiều cao
-    canvas.height = videoRef.current.videoWidth;
+  const capture = useCallback(async () => {
+    if (webcamRef.current) {
+      // Chụp ảnh từ webcam
+      const imageSrc = webcamRef.current.getScreenshot({ format: "image/png" });
 
-    const context = canvas.getContext("2d");
-
-    // Dịch chuyển gốc tọa độ đến giữa canvas mới
-    context.translate(canvas.width / 2, canvas.height / 2);
-
-    // Xoay canvas -90 độ (ngược chiều kim đồng hồ)
-    context.rotate(Math.PI / 2);
-
-    // Vẽ video lên canvas, lưu ý điều chỉnh lại tọa độ sau khi xoay
-    context.drawImage(
-      videoRef.current,
-      -canvas.height / 2,
-      -canvas.width / 2,
-      canvas.height,
-      canvas.width
-    );
-
-    const imageDataUrl = canvas.toDataURL("image/png", 1.0);
-    setPreViewImage(imageDataUrl);
-    const blob = await (await fetch(imageDataUrl)).blob();
-    const selectedFile = new File([blob], "captured-image.png", {
-      type: "image/png",
-    });
-
-    const today = new Date();
-    const date =
-      today.getSeconds() +
-      "-" +
-      today.getMinutes() +
-      "-" +
-      today.getHours() +
-      "-" +
-      today.getDate() +
-      "-" +
-      (today.getMonth() + 1) +
-      "-" +
-      today.getFullYear();
-    let fileExtension = ".png"; // Vì chúng ta đã sử dụng 'image/png'
-    const newFileName = `face-image-${date}${fileExtension}`;
-    const newFile = new File([selectedFile], newFileName, {
-      type: selectedFile.type,
-    });
-
-    try {
-      const res = await postUploadImage(newFile);
-      console.log("check image", res);
-
-      if (res.status === 200 || res.success === true) {
-        // Tùy thuộc vào phản hồi API của bạn
-        setImageCloud(res.data.filename);
-      } else {
-        throw new Error("Upload failed");
+      // Chuyển đổi base64 sang blob
+      const byteString = atob(imageSrc.split(",")[1]);
+      const mimeString = "image/png"; // Đặt MIME type cố định là PNG
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
       }
-    } catch (e) {
-      console.error("Upload image error:", e);
-      message.error("Upload image thất bại!");
-    } finally {
-      setIsLoadingCapture(false);
-      message.success("Upload image thành công!");
-    }
-  };
+      const blob = new Blob([ia], { type: mimeString });
 
-  const takePictureAgain = () => {
-    setPreViewImage(""); // Xóa ảnh chụp
+      // Đặt phần mở rộng file cố định là .png
+      const fileExtension = ".png";
 
-    // Ngừng hiển thị video tạm thời (nếu cần)
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
+      // Tạo tên file với timestamp
+      const today = new Date();
+      const date =
+        today.getSeconds() +
+        "-" +
+        today.getMinutes() +
+        "-" +
+        today.getHours() +
+        "-" +
+        today.getDate() +
+        "-" +
+        (today.getMonth() + 1) +
+        "-" +
+        today.getFullYear();
+      const newFileName = `face-image-${date}${fileExtension}`;
 
-    // Khởi động lại camera
-    navigator.mediaDevices
-      .getUserMedia({
-        video: { width: 1080, height: 1080 }, // Độ phân giải gốc của camera
-      })
-      .then((stream) => {
-        videoRef.current.srcObject = stream;
-      })
-      .catch((err) => {
-        console.error("Lỗi khi truy cập camera:", err);
-        message.error("Không thể truy cập camera của bạn.");
+      // Tạo file từ blob với định dạng PNG
+      const newFile = new File([blob], newFileName, {
+        type: mimeString,
       });
-  };
+
+      setPreViewImage(URL.createObjectURL(newFile));
+      setIsCaptured(true);
+      try {
+        const res = await postUploadImage(newFile);
+        console.log("check image", res);
+
+        if (res.status === 200 || res.success === true) {
+          // Tùy thuộc vào phản hồi API của bạn
+          setImageCloud(res.data.filename);
+        } else {
+          throw new Error("Upload failed");
+        }
+      } catch (e) {
+        console.error("Upload image error:", e);
+        message.error("Upload image thất bại!");
+      } finally {
+        setIsLoadingCapture(false);
+        message.success("Upload image thành công!");
+      }
+    } else {
+      console.error("Webcam not accessible");
+    }
+  }, [webcamRef]);
 
   const handleGenerateImage = async () => {
     setIsLoading(true);
@@ -144,14 +116,33 @@ const PageStyleSnap = () => {
     }
   };
 
+  const retake = () => {
+    setPreViewImage(null);
+    setIsCaptured(false);
+  };
+
   useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const videoDevices = devices.filter(
+        (device) => device.kind === "videoinput"
+      );
+      console.log(videoDevices); // Xem danh sách các camera có sẵn
+    });
+  }, []);
+
+  useEffect(() => {
+    navigator.permissions.query({ name: "camera" }).then((result) => {
+      if (result.state === "denied") {
+        console.error("Quyền truy cập camera bị từ chối");
+      }
+    });
     async function getVideo() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 1080, height: 1080 }, // Độ phân giải gốc của camera
+          video: { width: 768, height: 1024 }, // Độ phân giải gốc của camera
         });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        if (webcamRef.current) {
+          webcamRef.current.srcObject = stream;
         }
       } catch (err) {
         console.error("Error accessing camera: ", err);
@@ -161,8 +152,10 @@ const PageStyleSnap = () => {
     getVideo();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      if (webcamRef.current && webcamRef.current.srcObject) {
+        webcamRef.current.srcObject
+          .getTracks()
+          .forEach((track) => track.stop());
       }
     };
   }, []);
@@ -177,7 +170,7 @@ const PageStyleSnap = () => {
           <p className="text-2xl font-medium">
             {preViewImage ? "Preview Image" : "Live cam"}
           </p>
-          {preViewImage ? (
+          {isCaptured ? (
             <div className="flex flex-col items-center gap-4">
               <div className="min-h-[70vh] max-h-[70vh] h-fit items-center flex">
                 <img
@@ -193,7 +186,7 @@ const PageStyleSnap = () => {
                     ? "bg-slate-600 cursor-not-allowed hover:bg-slate-600"
                     : "hover:bg-slate-900"
                 }`}
-                onClick={takePictureAgain}
+                onClick={retake}
               >
                 Take picture again
               </button>
@@ -201,22 +194,18 @@ const PageStyleSnap = () => {
           ) : (
             <div className="flex flex-col items-center w-full gap-4">
               <div className="min-h-[70vh] max-h-[70vh] h-fit items-center flex">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-[100%] h-auto rotate-90"
-                />
+                <Webcam
+                  audio={false}
+                  height={1024}
+                  ref={webcamRef}
+                  screenshotFormat="image/jpeg"
+                  width={768}
+                  videoConstraints={videoConstraints}
+                ></Webcam>
               </div>
-              <button
-                className="rounded-lg px-5 py-2 bg-slate-800 text-white hover:text-slate-50 hover:bg-slate-900"
-                onClick={capturePhoto}
-              >
-                Snap Photo
-              </button>
+              <button onClick={capture}>Chụp ảnh</button>
             </div>
           )}
-          <canvas ref={canvasRef} style={{ display: "none" }} />
         </div>
         <div className="w-2/5 flex flex-col items-center gap-4 bg-slate-100 p-4 m-4 rounded-md border border-slate-200 shadow-2xl font-medium">
           <p className="text-2xl">Image generate</p>
